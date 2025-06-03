@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI互動式人物故事生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
+        }
+
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f7fafc;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+
+        .clear-btn {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .clear-btn:hover {
+            background: #cbd5e0;
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .story-output {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 15px;
+            min-height: 150px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+            border: 2px solid #e2e8f0;
+        }
+
+        .story-output.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .story-content {
+            color: #2d3748;
+            line-height: 1.8;
+            font-size: 1.05rem;
+            white-space: pre-wrap;
+        }
+
+        .error-message {
+            color: #e53e3e;
+            background: #fff5f5;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+            border: 1px solid #feb2b2;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .api-key-section {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .api-key-info {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .button-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ AI互動式人物故事生成器</h1>
+        
+        <div class="api-key-section">
+            <p class="api-key-info">請輸入您的 Gemini API Key（<a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #667eea;">獲取API Key</a>）</p>
+            <div class="form-group">
+                <input type="password" id="apiKey" placeholder="輸入您的 Gemini API Key">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="characters">角色名稱（可輸入多個，用逗號分隔）</label>
+            <input type="text" id="characters" placeholder="例如：小明, 小華, 老王">
+        </div>
+
+        <div class="form-group">
+            <label for="situation">事件／情境描述</label>
+            <textarea id="situation" placeholder="例如：在森林裡迷路、考試失利、畢業旅行、初戀告白等..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="style">故事風格</label>
+            <select id="style">
+                <option value="搞笑">😄 搞笑</option>
+                <option value="感人">😢 感人</option>
+                <option value="勵志">💪 勵志</option>
+                <option value="厭世">😑 厭世</option>
+                <option value="腦洞">🤯 腦洞</option>
+            </select>
+        </div>
+
+        <div class="button-container">
+            <button class="generate-btn" onclick="generateStory()">
+                產生故事
+            </button>
+            <button class="clear-btn" onclick="clearAll()">
+                清除重來
+            </button>
+        </div>
+
+        <div class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #718096;">AI正在創作故事中...</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="story-output" id="storyOutput">
+            <h3 style="color: #4a5568; margin-bottom: 15px;">📖 您的專屬故事</h3>
+            <div class="story-content" id="storyContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // 儲存API Key到localStorage
+        const apiKeyInput = document.getElementById('apiKey');
+        const savedApiKey = localStorage.getItem('geminiApiKey');
+        if (savedApiKey) {
+            apiKeyInput.value = savedApiKey;
+        }
+
+        apiKeyInput.addEventListener('change', () => {
+            localStorage.setItem('geminiApiKey', apiKeyInput.value);
+        });
+
+        async function generateStory() {
+            const apiKey = document.getElementById('apiKey').value;
+            const characters = document.getElementById('characters').value;
+            const situation = document.getElementById('situation').value;
+            const style = document.getElementById('style').value;
+
+            // 驗證輸入
+            if (!apiKey) {
+                showError('請輸入您的 Gemini API Key');
+                return;
+            }
+
+            if (!characters || !situation) {
+                showError('請填寫角色名稱和情境描述');
+                return;
+            }
+
+            // 顯示載入動畫
+            const loading = document.querySelector('.loading');
+            const storyOutput = document.getElementById('storyOutput');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            loading.classList.add('active');
+            storyOutput.classList.remove('active');
+            errorMessage.classList.remove('active');
+
+            // 構建prompt
+            const prompt = `請創作一個${style}風格的短篇故事，字數控制在150-300字之間。
+
+角色：${characters}
+情境：${situation}
+風格：${style}
+
+要求：
+1. 故事要符合${style}風格的特點
+2. 突出角色性格，情節生動有趣
+3. 有明確的開頭、發展和結尾
+4. 使用繁體中文
+5. 不要加標題，直接開始故事內容`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: prompt
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.9,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 1024,
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('API請求失敗');
+                }
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    const story = data.candidates[0].content.parts[0].text;
+                    displayStory(story);
+                } else {
+                    throw new Error('無法生成故事');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError('生成故事時發生錯誤，請檢查API Key是否正確或稍後再試');
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        function displayStory(story) {
+            const storyOutput = document.getElementById('storyOutput');
+            const storyContent = document.getElementById('storyContent');
+            
+            storyContent.textContent = story;
+            storyOutput.classList.add('active');
+            
+            // 平滑滾動到故事區域
+            storyOutput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.classList.add('active');
+            
+            setTimeout(() => {
+                errorMessage.classList.remove('active');
+            }, 5000);
+        }
+
+        function clearAll() {
+            document.getElementById('characters').value = '';
+            document.getElementById('situation').value = '';
+            document.getElementById('style').selectedIndex = 0;
+            document.getElementById('storyOutput').classList.remove('active');
+            document.getElementById('errorMessage').classList.remove('active');
+        }
+
+        // Enter鍵觸發生成
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                generateStory();
+            }
+        });
+    </script>
+</body>
+</html>

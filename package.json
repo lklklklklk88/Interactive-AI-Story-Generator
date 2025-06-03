@@ -1,0 +1,8 @@
+{
+  "name": "ai-story-generator",
+  "version": "1.0.0",
+  "description": "AI Story Generator",
+  "scripts": {
+    "start": "python -m http.server 8080"
+  }
+}
