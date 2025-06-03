@@ -125,6 +125,12 @@
             transform: translateY(0);
         }
 
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .clear-btn {
             background: #e2e8f0;
             color: #4a5568;
@@ -207,17 +213,25 @@
             display: block;
         }
 
-        .api-key-section {
-            background: #edf2f7;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+        .status-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
         }
 
-        .api-key-info {
-            font-size: 0.9rem;
-            color: #718096;
-            margin-bottom: 10px;
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
         }
 
         @media (max-width: 640px) {
@@ -232,14 +246,18 @@
             .button-container {
                 flex-direction: column;
             }
+            
+            .status-indicator {
+                bottom: 10px;
+                right: 10px;
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>✨ AI互動式人物故事生成器</h1>
-        
-        <!-- API Key 區塊已隱藏，使用預設的 API Key -->
 
         <div class="form-group">
             <label for="characters">角色名稱（可輸入多個，用逗號分隔）</label>
@@ -263,7 +281,7 @@
         </div>
 
         <div class="button-container">
-            <button class="generate-btn" onclick="generateStory()">
+            <button class="generate-btn" id="generateBtn" onclick="generateStory()">
                 產生故事
             </button>
             <button class="clear-btn" onclick="clearAll()">
@@ -284,42 +302,35 @@
         </div>
     </div>
 
+    <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span>系統運作中</span>
+    </div>
+
     <script>
-        // 從伺服器獲取 API Key
-        let API_KEY = '';
-        
-        // 初始化時獲取 API Key
-        async function initializeApp() {
+        // 檢查 API 狀態
+        async function checkApiStatus() {
             try {
                 const response = await fetch('/api/config');
-                const config = await response.json();
-                API_KEY = config.apiKey;
+                const data = await response.json();
                 
-                if (!API_KEY) {
-                    showError('API Key 未設定，請聯繫管理員');
+                if (!data.hasApiKey) {
+                    showError('系統尚未設定 API Key，請聯繫管理員');
                 }
             } catch (error) {
-                console.error('無法獲取配置:', error);
-                showError('無法連接到伺服器');
+                console.error('無法檢查 API 狀態:', error);
             }
         }
-        
-        // 頁面載入時初始化
-        initializeApp();
-        
+
+        // 頁面載入時檢查狀態
+        checkApiStatus();
+
         async function generateStory() {
-            // 使用從伺服器獲取的 API Key
-            const apiKey = API_KEY;
-            const characters = document.getElementById('characters').value;
-            const situation = document.getElementById('situation').value;
+            const characters = document.getElementById('characters').value.trim();
+            const situation = document.getElementById('situation').value.trim();
             const style = document.getElementById('style').value;
 
             // 驗證輸入
-            if (!apiKey) {
-                showError('API Key 未設定，請聯繫管理員');
-                return;
-            }
-            
             if (!characters || !situation) {
                 showError('請填寫角色名稱和情境描述');
                 return;
@@ -329,64 +340,44 @@
             const loading = document.querySelector('.loading');
             const storyOutput = document.getElementById('storyOutput');
             const errorMessage = document.getElementById('errorMessage');
+            const generateBtn = document.getElementById('generateBtn');
             
             loading.classList.add('active');
             storyOutput.classList.remove('active');
             errorMessage.classList.remove('active');
-
-            // 構建prompt
-            const prompt = `請創作一個${style}風格的短篇故事，字數控制在150-300字之間。
-
-角色：${characters}
-情境：${situation}
-風格：${style}
-
-要求：
-1. 故事要符合${style}風格的特點
-2. 突出角色性格，情節生動有趣
-3. 有明確的開頭、發展和結尾
-4. 使用繁體中文
-5. 不要加標題，直接開始故事內容`;
+            generateBtn.disabled = true;
 
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+                const response = await fetch('/api/generate-story', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: prompt
-                            }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.9,
-                            topK: 40,
-                            topP: 0.95,
-                            maxOutputTokens: 1024,
-                        }
+                        characters: characters,
+                        situation: situation,
+                        style: style
                     })
                 });
 
+                const data = await response.json();
+
                 if (!response.ok) {
-                    throw new Error('API請求失敗');
+                    throw new Error(data.error || '生成故事時發生錯誤');
                 }
 
-                const data = await response.json();
-                
-                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                    const story = data.candidates[0].content.parts[0].text;
-                    displayStory(story);
+                if (data.story) {
+                    displayStory(data.story);
                 } else {
                     throw new Error('無法生成故事');
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                showError('生成故事時發生錯誤，可能是 API 配額已用完或網路問題，請稍後再試');
+                showError(error.message || '生成故事時發生錯誤，請稍後再試');
             } finally {
                 loading.classList.remove('active');
+                generateBtn.disabled = false;
             }
         }
 
@@ -421,7 +412,7 @@
 
         // Enter鍵觸發生成
         document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === 'Enter' && !e.shiftKey && e.target.tagName !== 'TEXTAREA') {
                 generateStory();
             }
         });
