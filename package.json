@@ -1,8 +1,20 @@
 {
   "name": "ai-story-generator",
   "version": "1.0.0",
-  "description": "AI Story Generator",
+  "description": "AI Interactive Story Generator with Gemini API",
+  "author": "Your Name",
+  "license": "MIT",
+  "main": "server.js",
   "scripts": {
-    "start": "python -m http.server 8080"
-  }
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "ai",
+    "story-generator",
+    "gemini",
+    "interactive"
+  ]
 }
