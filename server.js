@@ -27,7 +27,7 @@ app.post('/api/generate-story', async (req, res) => {
     const prompt = `請用「${style}」風格，以${characters}為角色，描述一個「${situation}」的故事。`;
 
     // 呼叫 Gemini（Google AI Studio API）
-    const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + process.env.GEMINI_API_KEY;
+    const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=' + process.env.GEMINI_API_KEY;
 
     const response = await fetch(geminiUrl, {
       method: 'POST',
@@ -37,6 +37,7 @@ app.post('/api/generate-story', async (req, res) => {
       })
     });
     const data = await response.json();
+    console.log(JSON.stringify(data, null, 2)); // 印出 AI 回傳內容
     const story = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!story) throw new Error('AI 沒有回傳故事內容');
 
