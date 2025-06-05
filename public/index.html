@@ -357,6 +357,15 @@
             </select>
         </div>
 
+        <div class="form-group">
+            <label for="length">故事長度</label>
+            <select id="length">
+                <option value="short">📄 短篇（約100字）</option>
+                <option value="medium" selected>📖 中篇（約300字）</option>
+                <option value="long">📚 長篇（500字以上）</option>
+            </select>
+        </div>
+
         <div class="button-container">
             <button class="generate-btn" id="generateBtn" onclick="generateStory()">
                 產生故事
@@ -402,6 +411,7 @@
         let storyHistory = [];
         let currentCharacters = '';
         let currentStyle = '';
+        let currentLength = '';
 
         // 檢查 API 狀態
         async function checkApiStatus() {
@@ -424,6 +434,7 @@
             const characters = document.getElementById('characters').value.trim();
             const situation = document.getElementById('situation').value.trim();
             const style = document.getElementById('style').value;
+            const length = document.getElementById('length').value;
 
             // 驗證輸入
             if (!characters || !situation) {
@@ -434,6 +445,7 @@
             // 儲存當前設定
             currentCharacters = characters;
             currentStyle = style;
+            currentLength = length;
 
             // 重置故事歷史
             storyHistory = [];
@@ -458,7 +470,8 @@
                     body: JSON.stringify({
                         characters: characters,
                         situation: situation,
-                        style: style
+                        style: style,
+                        length: length
                     })
                 });
 
@@ -513,6 +526,7 @@
                         previousStory: fullStory,
                         characters: currentCharacters,
                         style: currentStyle,
+                        length: currentLength,
                         userPrompt: continuationPrompt
                     })
                 });
@@ -601,12 +615,14 @@
             document.getElementById('characters').value = '';
             document.getElementById('situation').value = '';
             document.getElementById('style').selectedIndex = 0;
+            document.getElementById('length').selectedIndex = 1; // 預設中篇
             document.getElementById('storyOutput').classList.remove('active');
             document.getElementById('errorMessage').classList.remove('active');
             document.getElementById('continuationPrompt').value = '';
             storyHistory = [];
             currentCharacters = '';
             currentStyle = '';
+            currentLength = '';
         }
 
         // Enter鍵觸發生成

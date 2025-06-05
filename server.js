@@ -17,14 +17,29 @@ app.get('/api/config', (req, res) => {
 
 // 產生故事
 app.post('/api/generate-story', async (req, res) => {
-  const { characters, situation, style } = req.body;
+  const { characters, situation, style, length } = req.body;
   if (!characters || !situation || !style) {
     return res.status(400).json({ error: '缺少參數' });
   }
 
   try {
+    // 根據長度設定字數
+    let wordCount = '';
+    switch(length) {
+      case 'short':
+        wordCount = '約100字';
+        break;
+      case 'long':
+        wordCount = '500字以上';
+        break;
+      case 'medium':
+      default:
+        wordCount = '約200-300字';
+        break;
+    }
+
     // 組合 prompt
-    const prompt = `請用「${style}」風格，以${characters}為角色，描述一個「${situation}」的故事。故事要有趣且完整，約200-300字。`;
+    const prompt = `請用「${style}」風格，以${characters}為角色，描述一個「${situation}」的故事。故事要有趣且完整，長度${wordCount}。`;
 
     // 呼叫 Gemini（Google AI Studio API）
     const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY;
@@ -49,13 +64,28 @@ app.post('/api/generate-story', async (req, res) => {
 
 // 延續故事
 app.post('/api/continue-story', async (req, res) => {
-  const { previousStory, characters, style, userPrompt } = req.body;
+  const { previousStory, characters, style, length, userPrompt } = req.body;
   
   if (!previousStory || !characters || !style) {
     return res.status(400).json({ error: '缺少必要參數' });
   }
 
   try {
+    // 根據長度設定字數
+    let wordCount = '';
+    switch(length) {
+      case 'short':
+        wordCount = '約100字';
+        break;
+      case 'long':
+        wordCount = '300-500字';
+        break;
+      case 'medium':
+      default:
+        wordCount = '約200-300字';
+        break;
+    }
+
     // 組合延續故事的 prompt
     let prompt = `這是一個「${style}」風格的故事，主要角色有${characters}。
 
@@ -69,7 +99,7 @@ ${previousStory}
       prompt += `\n\n延續方向：${userPrompt}`;
     }
 
-    prompt += '\n\n請寫出接下來的故事發展，約200-300字。要與前面的情節連貫，並帶來新的發展或轉折。';
+    prompt += `\n\n請寫出接下來的故事發展，長度${wordCount}。要與前面的情節連貫，並帶來新的發展或轉折。`;
 
     // 呼叫 Gemini API
     const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY;
