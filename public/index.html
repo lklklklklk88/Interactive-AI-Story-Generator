@@ -234,6 +234,79 @@
             background: #10b981;
         }
 
+        /* 新增故事延續功能的樣式 */
+        .story-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .continue-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 12px 24px;
+            flex: none;
+        }
+
+        .continue-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .continue-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .story-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .story-section:not(:last-child)::after {
+            content: '⬇';
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #cbd5e0;
+            font-size: 20px;
+        }
+
+        .section-header {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .continuation-input {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0f4ff;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .continuation-input.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .continuation-input textarea {
+            background: white;
+            margin-top: 10px;
+        }
+
+        .continuation-input label {
+            color: #5a67d8;
+        }
+
         @media (max-width: 640px) {
             .container {
                 padding: 25px;
@@ -244,6 +317,10 @@
             }
             
             .button-container {
+                flex-direction: column;
+            }
+            
+            .story-actions {
                 flex-direction: column;
             }
             
@@ -298,7 +375,20 @@
 
         <div class="story-output" id="storyOutput">
             <h3 style="color: #4a5568; margin-bottom: 15px;">📖 您的專屬故事</h3>
-            <div class="story-content" id="storyContent"></div>
+            <div id="storyContainer">
+                <!-- 故事內容會動態插入這裡 -->
+            </div>
+            
+            <div class="continuation-input" id="continuationInput">
+                <label for="continuationPrompt">想要故事如何發展？（選填）</label>
+                <textarea id="continuationPrompt" placeholder="例如：主角發現了神秘寶藏、遇到了意外的轉折、時間快轉十年後..."></textarea>
+            </div>
+            
+            <div class="story-actions">
+                <button class="continue-btn" id="continueBtn" onclick="continueStory()">
+                    📝 繼續故事
+                </button>
+            </div>
         </div>
     </div>
 
@@ -308,6 +398,11 @@
     </div>
 
     <script>
+        // 全域變數儲存故事歷史
+        let storyHistory = [];
+        let currentCharacters = '';
+        let currentStyle = '';
+
         // 檢查 API 狀態
         async function checkApiStatus() {
             try {
@@ -335,6 +430,13 @@
                 showError('請填寫角色名稱和情境描述');
                 return;
             }
+
+            // 儲存當前設定
+            currentCharacters = characters;
+            currentStyle = style;
+
+            // 重置故事歷史
+            storyHistory = [];
 
             // 顯示載入動畫
             const loading = document.querySelector('.loading');
@@ -367,7 +469,11 @@
                 }
 
                 if (data.story) {
-                    displayStory(data.story);
+                    storyHistory.push({
+                        content: data.story,
+                        type: 'initial'
+                    });
+                    displayStory();
                 } else {
                     throw new Error('無法生成故事');
                 }
@@ -381,14 +487,103 @@
             }
         }
 
-        function displayStory(story) {
+        async function continueStory() {
+            if (storyHistory.length === 0) {
+                showError('請先生成一個故事');
+                return;
+            }
+
+            const continuationPrompt = document.getElementById('continuationPrompt').value.trim();
+            const continueBtn = document.getElementById('continueBtn');
+            const loading = document.querySelector('.loading');
+            
+            loading.classList.add('active');
+            continueBtn.disabled = true;
+
+            try {
+                // 組合所有故事片段
+                const fullStory = storyHistory.map(item => item.content).join('\n\n');
+                
+                const response = await fetch('/api/continue-story', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        previousStory: fullStory,
+                        characters: currentCharacters,
+                        style: currentStyle,
+                        userPrompt: continuationPrompt
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || '延續故事時發生錯誤');
+                }
+
+                if (data.continuation) {
+                    storyHistory.push({
+                        content: data.continuation,
+                        type: 'continuation',
+                        userPrompt: continuationPrompt
+                    });
+                    displayStory();
+                    
+                    // 清空延續提示輸入
+                    document.getElementById('continuationPrompt').value = '';
+                } else {
+                    throw new Error('無法延續故事');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message || '延續故事時發生錯誤，請稍後再試');
+            } finally {
+                loading.classList.remove('active');
+                continueBtn.disabled = false;
+            }
+        }
+
+        function displayStory() {
             const storyOutput = document.getElementById('storyOutput');
-            const storyContent = document.getElementById('storyContent');
+            const storyContainer = document.getElementById('storyContainer');
+            const continuationInput = document.getElementById('continuationInput');
             
-            storyContent.textContent = story;
+            // 清空容器
+            storyContainer.innerHTML = '';
+            
+            // 顯示所有故事段落
+            storyHistory.forEach((item, index) => {
+                const section = document.createElement('div');
+                section.className = 'story-section';
+                
+                const header = document.createElement('div');
+                header.className = 'section-header';
+                
+                if (item.type === 'initial') {
+                    header.textContent = '📝 故事開始';
+                } else {
+                    header.textContent = `📝 續寫 ${index}`;
+                    if (item.userPrompt) {
+                        header.textContent += ` - ${item.userPrompt}`;
+                    }
+                }
+                
+                const content = document.createElement('div');
+                content.className = 'story-content';
+                content.textContent = item.content;
+                
+                section.appendChild(header);
+                section.appendChild(content);
+                storyContainer.appendChild(section);
+            });
+            
             storyOutput.classList.add('active');
+            continuationInput.classList.add('active');
             
-            // 平滑滾動到故事區域
+            // 平滑滾動到最新內容
             storyOutput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
@@ -408,12 +603,20 @@
             document.getElementById('style').selectedIndex = 0;
             document.getElementById('storyOutput').classList.remove('active');
             document.getElementById('errorMessage').classList.remove('active');
+            document.getElementById('continuationPrompt').value = '';
+            storyHistory = [];
+            currentCharacters = '';
+            currentStyle = '';
         }
 
         // Enter鍵觸發生成
         document.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey && e.target.tagName !== 'TEXTAREA') {
-                generateStory();
+                if (storyHistory.length === 0) {
+                    generateStory();
+                } else {
+                    continueStory();
+                }
             }
         });
     </script>

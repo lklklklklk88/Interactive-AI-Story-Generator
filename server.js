@@ -1,5 +1,5 @@
 const express = require('express');
-const fetch = require('node-fetch'); // npm install node-fetch
+const fetch = require('node-fetch');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -24,7 +24,7 @@ app.post('/api/generate-story', async (req, res) => {
 
   try {
     // 組合 prompt
-    const prompt = `請用「${style}」風格，以${characters}為角色，描述一個「${situation}」的故事。`;
+    const prompt = `請用「${style}」風格，以${characters}為角色，描述一個「${situation}」的故事。故事要有趣且完整，約200-300字。`;
 
     // 呼叫 Gemini（Google AI Studio API）
     const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY;
@@ -44,6 +44,54 @@ app.post('/api/generate-story', async (req, res) => {
     res.json({ story });
   } catch (err) {
     res.status(500).json({ error: err.message || '生成故事失敗' });
+  }
+});
+
+// 延續故事
+app.post('/api/continue-story', async (req, res) => {
+  const { previousStory, characters, style, userPrompt } = req.body;
+  
+  if (!previousStory || !characters || !style) {
+    return res.status(400).json({ error: '缺少必要參數' });
+  }
+
+  try {
+    // 組合延續故事的 prompt
+    let prompt = `這是一個「${style}」風格的故事，主要角色有${characters}。
+
+之前的故事內容：
+${previousStory}
+
+請延續這個故事，保持相同的風格和角色設定。`;
+
+    // 如果使用者有提供延續方向，加入 prompt 中
+    if (userPrompt) {
+      prompt += `\n\n延續方向：${userPrompt}`;
+    }
+
+    prompt += '\n\n請寫出接下來的故事發展，約200-300字。要與前面的情節連貫，並帶來新的發展或轉折。';
+
+    // 呼叫 Gemini API
+    const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY;
+
+    const response = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+
+    const data = await response.json();
+    console.log('Continuation response:', JSON.stringify(data, null, 2));
+    
+    const continuation = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!continuation) throw new Error('AI 沒有回傳延續內容');
+
+    res.json({ continuation });
+  } catch (err) {
+    console.error('Continue story error:', err);
+    res.status(500).json({ error: err.message || '延續故事失敗' });
   }
 });
 
