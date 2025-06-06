@@ -308,7 +308,98 @@
         }
 
         .continuation-input .form-group {
-            margin-bottom: 0;
+            margin-bottom: 15px;
+        }
+
+        /* 新增：類型群組樣式 */
+        .style-groups {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .style-group {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .style-group-title {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .style-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+        }
+
+        .style-option {
+            padding: 8px 12px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .style-option:hover {
+            border-color: #667eea;
+            transform: translateY(-1px);
+        }
+
+        .style-option.selected {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* 隱藏原本的風格選擇 */
+        #style {
+            display: none;
+        }
+
+        .advanced-settings {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f7ff;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .advanced-settings-title {
+            font-size: 0.95rem;
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-icon.open {
+            transform: rotate(180deg);
+        }
+
+        .advanced-content {
+            display: none;
+        }
+
+        .advanced-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
         }
 
         @media (max-width: 640px) {
@@ -333,6 +424,10 @@
                 right: 10px;
                 font-size: 0.8rem;
             }
+
+            .style-options {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
         }
     </style>
 </head>
@@ -351,13 +446,43 @@
         </div>
 
         <div class="form-group">
-            <label for="style">故事風格</label>
+            <label>故事風格</label>
+            <div class="style-groups">
+                <div class="style-group">
+                    <div class="style-group-title">基本風格</div>
+                    <div class="style-options">
+                        <div class="style-option selected" data-style="搞笑">😄 搞笑</div>
+                        <div class="style-option" data-style="感人">😢 感人</div>
+                        <div class="style-option" data-style="勵志">💪 勵志</div>
+                        <div class="style-option" data-style="厭世">😑 厭世</div>
+                        <div class="style-option" data-style="腦洞">🤯 腦洞</div>
+                    </div>
+                </div>
+                <div class="style-group">
+                    <div class="style-group-title">類型風格</div>
+                    <div class="style-options">
+                        <div class="style-option" data-style="懸疑推理">🔍 懸疑推理</div>
+                        <div class="style-option" data-style="科幻未來">🚀 科幻未來</div>
+                        <div class="style-option" data-style="奇幻冒險">🧙 奇幻冒險</div>
+                        <div class="style-option" data-style="恐怖驚悚">👻 恐怖驚悚</div>
+                        <div class="style-option" data-style="愛情浪漫">💕 愛情浪漫</div>
+                        <div class="style-option" data-style="歷史穿越">⏰ 歷史穿越</div>
+                    </div>
+                </div>
+                <div class="style-group">
+                    <div class="style-group-title">特殊風格</div>
+                    <div class="style-options">
+                        <div class="style-option" data-style="童話寓言">🦄 童話寓言</div>
+                        <div class="style-option" data-style="武俠江湖">⚔️ 武俠江湖</div>
+                        <div class="style-option" data-style="日常溫馨">🏠 日常溫馨</div>
+                        <div class="style-option" data-style="黑色幽默">😈 黑色幽默</div>
+                        <div class="style-option" data-style="諷刺社會">🎭 諷刺社會</div>
+                        <div class="style-option" data-style="靈異神秘">👁️ 靈異神秘</div>
+                    </div>
+                </div>
+            </div>
             <select id="style">
-                <option value="搞笑">😄 搞笑</option>
-                <option value="感人">😢 感人</option>
-                <option value="勵志">💪 勵志</option>
-                <option value="厭世">😑 厭世</option>
-                <option value="腦洞">🤯 腦洞</option>
+                <option value="搞笑" selected>😄 搞笑</option>
             </select>
         </div>
 
@@ -368,6 +493,34 @@
                 <option value="medium" selected>📖 中篇（約300字）</option>
                 <option value="long">📚 長篇（500字以上）</option>
             </select>
+        </div>
+
+        <div class="advanced-settings">
+            <div class="advanced-settings-title" onclick="toggleAdvanced()">
+                <span class="toggle-icon">▼</span>
+                進階設定
+            </div>
+            <div class="advanced-content" id="advancedContent">
+                <div class="form-group">
+                    <label for="perspective">敘事視角</label>
+                    <select id="perspective">
+                        <option value="default">預設（由AI決定）</option>
+                        <option value="first">第一人稱</option>
+                        <option value="third">第三人稱</option>
+                        <option value="omniscient">全知視角</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ending">結局類型</label>
+                    <select id="ending">
+                        <option value="default">預設（由AI決定）</option>
+                        <option value="happy">圓滿結局</option>
+                        <option value="open">開放式結局</option>
+                        <option value="twist">反轉結局</option>
+                        <option value="tragic">悲劇結局</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div class="button-container">
@@ -393,10 +546,28 @@
             </div>
             
             <div class="continuation-input" id="continuationInput">
-                <label for="continuationPrompt">想要故事如何發展？（選填）</label>
-                <textarea id="continuationPrompt" placeholder="例如：主角發現了神秘寶藏、遇到了意外的轉折、時間快轉十年後..."></textarea>
+                <div class="form-group">
+                    <label for="continuationPrompt">想要故事如何發展？（選填）</label>
+                    <textarea id="continuationPrompt" placeholder="例如：主角發現了神秘寶藏、遇到了意外的轉折、時間快轉十年後..."></textarea>
+                </div>
                 
-                <div class="form-group" style="margin-top: 15px;">
+                <div class="form-group">
+                    <label>延續風格（可選擇不同風格）</label>
+                    <div class="style-groups">
+                        <div class="style-group">
+                            <div class="style-options">
+                                <div class="style-option" data-continuation-style="maintain">🔄 保持原風格</div>
+                                <div class="style-option" data-continuation-style="搞笑">😄 轉為搞笑</div>
+                                <div class="style-option" data-continuation-style="感人">😢 轉為感人</div>
+                                <div class="style-option" data-continuation-style="懸疑推理">🔍 轉為懸疑</div>
+                                <div class="style-option" data-continuation-style="恐怖驚悚">👻 轉為恐怖</div>
+                                <div class="style-option" data-continuation-style="反轉劇情">🔀 劇情反轉</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
                     <label for="continuationLength">延續長度</label>
                     <select id="continuationLength">
                         <option value="short">📄 短篇延續（約100字）</option>
@@ -423,8 +594,51 @@
         // 全域變數儲存故事歷史
         let storyHistory = [];
         let currentCharacters = '';
-        let currentStyle = '';
+        let currentStyle = '搞笑';
         let currentLength = '';
+        let selectedContinuationStyle = 'maintain';
+
+        // 風格選擇功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化風格選擇
+            const styleOptions = document.querySelectorAll('.style-option[data-style]');
+            styleOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // 移除所有選中狀態
+                    styleOptions.forEach(opt => opt.classList.remove('selected'));
+                    // 添加選中狀態
+                    this.classList.add('selected');
+                    // 更新隱藏的 select
+                    currentStyle = this.dataset.style;
+                    document.getElementById('style').value = currentStyle;
+                });
+            });
+
+            // 初始化延續風格選擇
+            const continuationOptions = document.querySelectorAll('.style-option[data-continuation-style]');
+            continuationOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // 移除所有選中狀態
+                    continuationOptions.forEach(opt => opt.classList.remove('selected'));
+                    // 添加選中狀態
+                    this.classList.add('selected');
+                    // 更新選中的延續風格
+                    selectedContinuationStyle = this.dataset.continuationStyle;
+                });
+            });
+
+            // 預設選中"保持原風格"
+            document.querySelector('[data-continuation-style="maintain"]').classList.add('selected');
+        });
+
+        // 切換進階設定
+        function toggleAdvanced() {
+            const content = document.getElementById('advancedContent');
+            const icon = document.querySelector('.toggle-icon');
+            
+            content.classList.toggle('active');
+            icon.classList.toggle('open');
+        }
 
         // 檢查 API 狀態
         async function checkApiStatus() {
@@ -446,8 +660,10 @@
         async function generateStory() {
             const characters = document.getElementById('characters').value.trim();
             const situation = document.getElementById('situation').value.trim();
-            const style = document.getElementById('style').value;
+            const style = currentStyle;
             const length = document.getElementById('length').value;
+            const perspective = document.getElementById('perspective').value;
+            const ending = document.getElementById('ending').value;
 
             // 驗證輸入
             if (!characters || !situation) {
@@ -457,11 +673,15 @@
 
             // 儲存當前設定
             currentCharacters = characters;
-            currentStyle = style;
             currentLength = length;
 
             // 重置故事歷史
             storyHistory = [];
+
+            // 重置延續風格選擇
+            document.querySelectorAll('[data-continuation-style]').forEach(opt => opt.classList.remove('selected'));
+            document.querySelector('[data-continuation-style="maintain"]').classList.add('selected');
+            selectedContinuationStyle = 'maintain';
 
             // 顯示載入動畫
             const loading = document.querySelector('.loading');
@@ -484,7 +704,9 @@
                         characters: characters,
                         situation: situation,
                         style: style,
-                        length: length
+                        length: length,
+                        perspective: perspective,
+                        ending: ending
                     })
                 });
 
@@ -497,7 +719,8 @@
                 if (data.story) {
                     storyHistory.push({
                         content: data.story,
-                        type: 'initial'
+                        type: 'initial',
+                        style: style
                     });
                     displayStory();
                 } else {
@@ -524,6 +747,9 @@
             const continueBtn = document.getElementById('continueBtn');
             const loading = document.querySelector('.loading');
             
+            // 決定要使用的風格
+            const styleToUse = selectedContinuationStyle === 'maintain' ? currentStyle : selectedContinuationStyle;
+            
             loading.classList.add('active');
             continueBtn.disabled = true;
 
@@ -539,8 +765,10 @@
                     body: JSON.stringify({
                         previousStory: fullStory,
                         characters: currentCharacters,
-                        style: currentStyle,
-                        length: continuationLength,  // 使用延續時選擇的長度
+                        style: styleToUse,
+                        originalStyle: currentStyle,
+                        styleChange: selectedContinuationStyle !== 'maintain',
+                        length: continuationLength,
                         userPrompt: continuationPrompt
                     })
                 });
@@ -555,7 +783,9 @@
                     storyHistory.push({
                         content: data.continuation,
                         type: 'continuation',
-                        userPrompt: continuationPrompt
+                        userPrompt: continuationPrompt,
+                        style: styleToUse,
+                        styleChanged: selectedContinuationStyle !== 'maintain'
                     });
                     displayStory();
                     
@@ -563,6 +793,15 @@
                     document.getElementById('continuationPrompt').value = '';
                     // 重置延續長度為預設值
                     document.getElementById('continuationLength').selectedIndex = 1;
+                    // 重置風格選擇為"保持原風格"
+                    document.querySelectorAll('[data-continuation-style]').forEach(opt => opt.classList.remove('selected'));
+                    document.querySelector('[data-continuation-style="maintain"]').classList.add('selected');
+                    selectedContinuationStyle = 'maintain';
+                    
+                    // 如果風格有改變，更新當前風格
+                    if (selectedContinuationStyle !== 'maintain') {
+                        currentStyle = styleToUse;
+                    }
                 } else {
                     throw new Error('無法延續故事');
                 }
@@ -593,12 +832,18 @@
                 header.className = 'section-header';
                 
                 if (item.type === 'initial') {
-                    header.textContent = '📝 故事開始';
+                    header.textContent = `📝 故事開始 - ${item.style}風格`;
                 } else {
-                    header.textContent = `📝 續寫 ${index}`;
-                    if (item.userPrompt) {
-                        header.textContent += ` - ${item.userPrompt}`;
+                    let headerText = `📝 續寫 ${index}`;
+                    if (item.styleChanged) {
+                        headerText += ` - 轉為${item.style}風格`;
+                    } else {
+                        headerText += ` - ${item.style}風格`;
                     }
+                    if (item.userPrompt) {
+                        headerText += ` (${item.userPrompt})`;
+                    }
+                    header.textContent = headerText;
                 }
                 
                 const content = document.createElement('div');
@@ -630,16 +875,32 @@
         function clearAll() {
             document.getElementById('characters').value = '';
             document.getElementById('situation').value = '';
-            document.getElementById('style').selectedIndex = 0;
             document.getElementById('length').selectedIndex = 1; // 預設中篇
+            document.getElementById('perspective').selectedIndex = 0; // 預設
+            document.getElementById('ending').selectedIndex = 0; // 預設
             document.getElementById('storyOutput').classList.remove('active');
             document.getElementById('errorMessage').classList.remove('active');
             document.getElementById('continuationPrompt').value = '';
             document.getElementById('continuationLength').selectedIndex = 1; // 預設中篇
+            
+            // 重置風格選擇
+            document.querySelectorAll('.style-option[data-style]').forEach(opt => opt.classList.remove('selected'));
+            document.querySelector('[data-style="搞笑"]').classList.add('selected');
+            currentStyle = '搞笑';
+            
+            // 重置延續風格選擇
+            document.querySelectorAll('[data-continuation-style]').forEach(opt => opt.classList.remove('selected'));
+            document.querySelector('[data-continuation-style="maintain"]').classList.add('selected');
+            selectedContinuationStyle = 'maintain';
+            
+            // 清空故事歷史
             storyHistory = [];
             currentCharacters = '';
-            currentStyle = '';
             currentLength = '';
+            
+            // 關閉進階設定
+            document.getElementById('advancedContent').classList.remove('active');
+            document.querySelector('.toggle-icon').classList.remove('open');
         }
 
         // Enter鍵觸發生成
