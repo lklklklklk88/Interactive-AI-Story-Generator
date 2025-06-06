@@ -307,6 +307,10 @@
             color: #5a67d8;
         }
 
+        .continuation-input .form-group {
+            margin-bottom: 0;
+        }
+
         @media (max-width: 640px) {
             .container {
                 padding: 25px;
@@ -391,6 +395,15 @@
             <div class="continuation-input" id="continuationInput">
                 <label for="continuationPrompt">想要故事如何發展？（選填）</label>
                 <textarea id="continuationPrompt" placeholder="例如：主角發現了神秘寶藏、遇到了意外的轉折、時間快轉十年後..."></textarea>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="continuationLength">延續長度</label>
+                    <select id="continuationLength">
+                        <option value="short">📄 短篇延續（約100字）</option>
+                        <option value="medium" selected>📖 中篇延續（約300字）</option>
+                        <option value="long">📚 長篇延續（500字以上）</option>
+                    </select>
+                </div>
             </div>
             
             <div class="story-actions">
@@ -507,6 +520,7 @@
             }
 
             const continuationPrompt = document.getElementById('continuationPrompt').value.trim();
+            const continuationLength = document.getElementById('continuationLength').value;
             const continueBtn = document.getElementById('continueBtn');
             const loading = document.querySelector('.loading');
             
@@ -526,7 +540,7 @@
                         previousStory: fullStory,
                         characters: currentCharacters,
                         style: currentStyle,
-                        length: currentLength,
+                        length: continuationLength,  // 使用延續時選擇的長度
                         userPrompt: continuationPrompt
                     })
                 });
@@ -547,6 +561,8 @@
                     
                     // 清空延續提示輸入
                     document.getElementById('continuationPrompt').value = '';
+                    // 重置延續長度為預設值
+                    document.getElementById('continuationLength').selectedIndex = 1;
                 } else {
                     throw new Error('無法延續故事');
                 }
@@ -619,6 +635,7 @@
             document.getElementById('storyOutput').classList.remove('active');
             document.getElementById('errorMessage').classList.remove('active');
             document.getElementById('continuationPrompt').value = '';
+            document.getElementById('continuationLength').selectedIndex = 1; // 預設中篇
             storyHistory = [];
             currentCharacters = '';
             currentStyle = '';
