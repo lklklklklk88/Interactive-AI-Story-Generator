@@ -480,14 +480,15 @@
             </div>
 
             <div class="style-section">
-                <h3>延續風格（可選擇不同風格）</h3>
-                <div class="continuation-styles">
-                    <div class="style-option selected" data-continuation-style="maintain">🔄 保持原風格</div>
-                    <div class="style-option" data-continuation-style="搞笑">😄 轉為搞笑</div>
-                    <div class="style-option" data-continuation-style="感人">😢 轉為感人</div>
-                    <div class="style-option" data-continuation-style="懸疑推理">🔍 轉為懸疑</div>
-                    <div class="style-option" data-continuation-style="恐怖驚悚">👻 轉為恐怖</div>
-                    <div class="style-option" data-continuation-style="反轉劇情">🔀 劇情反轉</div>
+                <h3>延續風格</h3>
+                <div class="style-info" style="background: #f0f4ff; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.85rem; color: #5a67d8;">
+                    💡 提示：在左側選擇想要的風格，故事將以該風格延續
+                </div>
+                <div class="current-style" style="text-align: center; padding: 16px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e2e8f0;">
+                    <div style="font-size: 0.85rem; color: #718096; margin-bottom: 8px;">目前選擇的風格</div>
+                    <div id="currentStyleDisplay" style="font-size: 1.1rem; font-weight: 600; color: #2d3748;">
+                        <!-- 動態顯示當前風格 -->
+                    </div>
                 </div>
             </div>
 
@@ -535,18 +536,22 @@
                     this.classList.add('selected');
                     currentStyle = this.dataset.style;
                     document.getElementById('style').value = currentStyle;
+                    
+                    // 更新右側顯示的當前風格
+                    updateCurrentStyleDisplay();
                 });
             });
-
-            // 延續風格選擇
-            const continuationOptions = document.querySelectorAll('.style-option[data-continuation-style]');
-            continuationOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    continuationOptions.forEach(opt => opt.classList.remove('selected'));
-                    this.classList.add('selected');
-                    selectedContinuationStyle = this.dataset.continuationStyle;
-                });
-            });
+        }
+        
+        // 更新當前風格顯示
+        function updateCurrentStyleDisplay() {
+            const display = document.getElementById('currentStyleDisplay');
+            if (display) {
+                const selectedOption = document.querySelector('.style-option[data-style].selected');
+                if (selectedOption) {
+                    display.innerHTML = selectedOption.innerHTML;
+                }
+            }
         }
 
         // 檢查 API 狀態
@@ -623,6 +628,7 @@
                     
                     // 顯示右側面板
                     document.getElementById('rightPanel').style.display = 'block';
+                    updateCurrentStyleDisplay();
                 } else {
                     throw new Error('無法生成故事');
                 }
